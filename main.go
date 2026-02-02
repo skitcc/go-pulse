@@ -61,12 +61,14 @@ func (m *Monitor) displayDomains() {
 
 func (m *Monitor) start(interval time.Duration) {
 	ticker := time.NewTicker(interval)
-
+	wg := sync.WaitGroup{}
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
+				wg.Add(len(m.domains))
 				for _, val := range m.domains {
+					defer wg.Done()
 					go repeatAction(val, m.gs)
 				}
 			case <-m.done:
@@ -75,6 +77,7 @@ func (m *Monitor) start(interval time.Duration) {
 			}
 		}
 	}()
+	wg.Wait()
 }
 
 func (m *Monitor) stop() {
